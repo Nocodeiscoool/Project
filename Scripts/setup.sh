@@ -39,7 +39,7 @@ echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4
 apt-get update
 
 
-WAZUH_MANAGER="192.168.50.102" apt-get install -y wazuh-agent
+WAZUH_MANAGER="192.168.50.101" apt-get install -y wazuh-agent
 
 systemctl daemon-reload
 systemctl enable wazuh-agent
