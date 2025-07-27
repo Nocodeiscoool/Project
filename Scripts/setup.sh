@@ -55,5 +55,9 @@ apt update
 
 apt install -y zabbix-agent2
 
+systemctl restart zabbix-agent2
+
+systemctl enable zabbix-agent2 
+
 #root login restriction
 sed -i 's|^root:\([^:]*\):\([^:]*\):\([^:]*\):\([^:]*\):\([^:]*\):[^:]*$|root:\1:\2:\3:\4:\5:/sbin/nologin|' /etc/passwd
