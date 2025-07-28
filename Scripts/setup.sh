@@ -32,18 +32,18 @@ echo "$USERNAME:$PASSWORD" | chpasswd
 sudo usermod -aG sudo $USERNAME
 
 #installing Wazuh-agent
-curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && chmod 644 /usr/share/keyrings/wazuh.gpg
+#curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && chmod 644 /usr/share/keyrings/wazuh.gpg
 
-echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
+#echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
 
-apt-get update
+#apt-get update
 
 
-WAZUH_MANAGER="192.168.50.101" apt-get install -y wazuh-agent
+#WAZUH_MANAGER="192.168.50.101" apt-get install -y wazuh-agent
 
-systemctl daemon-reload
-systemctl enable wazuh-agent
-systemctl start wazuh-agent
+#systemctl daemon-reload
+#systemctl enable wazuh-agent
+#systemctl start wazuh-agent
 
 #installing zabbix-agent2
 wget https://repo.zabbix.com/zabbix/7.4/release/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.4+debian12_all.deb
