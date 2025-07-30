@@ -71,10 +71,27 @@ else
   echo "Server=$ZABBIX_SERVER" >> "$CONFIG_FILE"
 fi
 
+if grep -q "^ServerActive=" "$CONFIG_FILE"; then
+  sed -i "s|^ServerActive=.*|ServerActive=$ZABBIX_SERVER|" "$CONFIG_FILE"
+else
+  echo "ServerActive=$ZABBIX_SERVER" >> "$CONFIG_FILE"
+fi
+
 if grep -q "^Hostname=" "$CONFIG_FILE"; then
   sed -i "s|^Hostname=.*|Hostname=$AGENT_HOSTNAME|" "$CONFIG_FILE"
 else
   echo "Hostname=$AGENT_HOSTNAME" >> "$CONFIG_FILE"
+fi
+
+SERVICE_FILE="/lib/systemd/system/zabbix-agent2.service"
+
+# Проверяем, есть ли уже нужные параметры
+if ! grep -q "^RuntimeDirectory=zabbix" "$SERVICE_FILE"; then
+    echo "RuntimeDirectory=zabbix" >> "$SERVICE_FILE"
+fi
+
+if ! grep -q "^RuntimeDirectoryMode=0755" "$SERVICE_FILE"; then
+    echo "RuntimeDirectoryMode=0755" >> "$SERVICE_FILE"
 fi
 
 systemctl restart zabbix-agent2
