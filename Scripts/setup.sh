@@ -22,8 +22,18 @@ apt-get install gnupg2 -y
 timedatectl set-timezone Europe/Moscow
 
 #creating new user
-USERNAME=$(hostname)
-PASSWORD=$(hostname)
+read -p "Enter new user's name: " USERNAME
+read -s -p "Enter password: " PASSWORD
+echo
+read -s -p "Confirm password: " PASSWORD_CONFIRM
+echo
+
+if [ "$PASSWORD" != "$PASSWORD_CONFIRM" ]; then
+  echo "Error: passwords do not match."
+  exit 1
+fi
+
+echo "Username: $USERNAME"
 
 useradd -m -s /bin/bash "$USERNAME"
 
@@ -31,22 +41,11 @@ echo "$USERNAME:$PASSWORD" | chpasswd
 
 sudo usermod -aG sudo $USERNAME
 
-#installing Wazuh-agent
-#curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && chmod 644 /usr/share/keyrings/wazuh.gpg
-
-#echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
-
-#apt-get update
-
-
-#WAZUH_MANAGER="192.168.50.101" apt-get install -y wazuh-agent
-
-#systemctl daemon-reload
-#systemctl enable wazuh-agent
-#systemctl start wazuh-agent
 
 #installing zabbix-agent2
 wget https://repo.zabbix.com/zabbix/7.4/release/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.4+debian12_all.deb
+
+mkdir -p /run/zabbix
 
 dpkg -i zabbix-release_latest_7.4+debian12_all.deb
 
@@ -57,6 +56,28 @@ apt install -y zabbix-agent2
 systemctl restart zabbix-agent2
 
 systemctl enable zabbix-agent2 
+
+sudo chown -R zabbix:zabbix /run/zabbix
+
+read -p "Enter Zabbix server IP or hostname: " ZABBIX_SERVER
+read -p "Enter hostname for the agent: " AGENT_HOSTNAME
+
+CONFIG_FILE="/etc/zabbix/zabbix_agent2.conf"
+
+
+if grep -q "^Server=" "$CONFIG_FILE"; then
+  sed -i "s|^Server=.*|Server=$ZABBIX_SERVER|" "$CONFIG_FILE"
+else
+  echo "Server=$ZABBIX_SERVER" >> "$CONFIG_FILE"
+fi
+
+if grep -q "^Hostname=" "$CONFIG_FILE"; then
+  sed -i "s|^Hostname=.*|Hostname=$AGENT_HOSTNAME|" "$CONFIG_FILE"
+else
+  echo "Hostname=$AGENT_HOSTNAME" >> "$CONFIG_FILE"
+fi
+
+systemctl restart zabbix-agent2
 
 #root login restriction
 sed -i 's|^root:\([^:]*\):\([^:]*\):\([^:]*\):\([^:]*\):\([^:]*\):[^:]*$|root:\1:\2:\3:\4:\5:/sbin/nologin|' /etc/passwd
