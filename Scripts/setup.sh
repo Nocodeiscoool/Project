@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [[ $EUID -ne 0 ]]; then
   echo "Start script from root"
   exit 1
@@ -83,16 +85,41 @@ else
   echo "Hostname=$AGENT_HOSTNAME" >> "$CONFIG_FILE"
 fi
 
+
 SERVICE_FILE="/lib/systemd/system/zabbix-agent2.service"
+TMP_FILE=$(mktemp)
 
-# Проверяем, есть ли уже нужные параметры
-if ! grep -q "^RuntimeDirectory=zabbix" "$SERVICE_FILE"; then
-    echo "RuntimeDirectory=zabbix" >> "$SERVICE_FILE"
+if ! grep -q "^\[Service\]" "$SERVICE_FILE"; then
+    exit 1
 fi
 
-if ! grep -q "^RuntimeDirectoryMode=0755" "$SERVICE_FILE"; then
-    echo "RuntimeDirectoryMode=0755" >> "$SERVICE_FILE"
+grep -q "^RuntimeDirectory=zabbix" "$SERVICE_FILE"
+HAS_RUNTIME_DIR=$?
+
+grep -q "^RuntimeDirectoryMode=0755" "$SERVICE_FILE"
+HAS_RUNTIME_MODE=$?
+
+awk -v rd=$HAS_RUNTIME_DIR -v rm=$HAS_RUNTIME_MODE '
+/^\[Service\]/ {
+    print
+    if (rd != 0) {
+        print "RuntimeDirectory=zabbix"
+    }
+    if (rm != 0) {
+        print "RuntimeDirectoryMode=0755"
+    }
+    next
+}
+{print}
+' "$SERVICE_FILE" > "$TMP_FILE"
+
+if [ $HAS_RUNTIME_DIR -ne 0 ] || [ $HAS_RUNTIME_MODE -ne 0 ]; then
+    mv "$TMP_FILE" "$SERVICE_FILE"
+else
+    rm "$TMP_FILE"
 fi
+
+
 
 systemctl restart zabbix-agent2
 
